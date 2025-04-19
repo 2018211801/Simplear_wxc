@@ -6,7 +6,7 @@ export NCCL_SOCKET_IFNAME=eth0
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 ACCELERATE_CPU_AFFINITY=1 \
-torchrun \
+ torchrun \
     --nnodes=4 \
     --nproc_per_node=8 \
     llava/train/train_mem.py \

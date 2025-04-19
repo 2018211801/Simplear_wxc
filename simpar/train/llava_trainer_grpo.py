@@ -14,6 +14,8 @@
 
 import os
 import sys
+# sys.path.append("/openseg_blob/wxc/SimpleAR")
+
 import logging
 import wandb
 from typing import Union, Any, Optional
@@ -31,13 +33,17 @@ from accelerate.utils import broadcast_object_list, gather, gather_object, set_s
 import open_clip
 from hpsv2.src.open_clip import create_model_and_transforms, get_tokenizer
 from open_clip import OPENAI_DATASET_MEAN, OPENAI_DATASET_STD
-
+import trl
+print(trl.__file__)
+import sys
+print(sys.path)
+print("debug==============")
 from trl import GRPOTrainer, ModelConfig, ScriptArguments, TrlParser, get_peft_config
 from trl.trainer.utils import pad
 from trl.models import unwrap_model_for_generation
 
-from simpar.model.multimodal_encoder.cosmos_tokenizer.networks import TokenizerConfigs
-from simpar.model.multimodal_encoder.cosmos_tokenizer.video_lib import CausalVideoTokenizer as CosmosTokenizer
+from simpar.model.tokenizer.cosmos_tokenizer.networks import TokenizerConfigs
+from simpar.model.tokenizer.cosmos_tokenizer.video_lib import CausalVideoTokenizer as CosmosTokenizer
 from simpar.train.t2i_data import GRPOT2IDataset
 from simpar.grpo.configs import GRPOConfig
 from simpar.grpo.utils.callbacks import get_callbacks
@@ -56,6 +62,9 @@ from simpar.grpo.rewards import (
     aesthetic_reward,
     hps_reward,
 )
+
+# 设置 Hugging Face 缓存路径
+# os.environ["HF_HOME"] = "/openseg_blob/wxc/huggingface_cache"
 
 
 logger = logging.getLogger(__name__)
@@ -354,14 +363,14 @@ class GRPOScriptArguments(ScriptArguments):
     )
 
     vq_model_ckpt: str = field(
-        default="/path_to_tokenizer/Cosmos-1.0-Tokenizer-DV8x16x16"
+        default="/openseg_blob/wxc/SimpleAR/ckpt/cosmos"
     )
 
     clip_model_ckpt: str = field(
-        default="/path_to_clip/vit_large_patch14_clip_224.openai"
+        default="/openseg_blob/wxc/SimpleAR/ckpt/CLIP-ViT-H-14-laion2B-s32B-b79K"
     )
     aest_model_ckpt: str = field(
-        default="/path_to_aesthetic/aesthetic-predictor/sa_0_4_vit_l_14_linear.pth"
+        default="/openseg_blob/wxc/SimpleAR/ckpt/aesthetic-preditor/HPS_v2_compressed.pt"
     )
 
 
@@ -407,6 +416,7 @@ def main(script_args, training_args, model_args):
     ################
     # Load tokenizer
     ################
+    print(f"AutoTokenizer==model_args.model_name_or_path::{model_args.model_name_or_path}")
     tokenizer = AutoTokenizer.from_pretrained(model_args.model_name_or_path, use_fast=False)
 
     # Load VQ model
@@ -417,6 +427,7 @@ def main(script_args, training_args, model_args):
     vq_model.requires_grad_(False)
 
     # Load reward model
+    print(f"script_args.clip_model_ckpt{script_args.clip_model_ckpt}")
     clip_model, _, clip_preprocess = create_model_and_transforms(
         'ViT-H-14',
         f'{script_args.clip_model_ckpt}/open_clip_pytorch_model.bin',
@@ -479,7 +490,9 @@ def main(script_args, training_args, model_args):
         use_cache=False if training_args.gradient_checkpointing else True,
     )
     training_args.model_init_kwargs = model_kwargs
-
+    print("###############################")
+    print(training_args)
+    print("###############################")
     #############################
     # Initialize the GRPO trainer
     #############################

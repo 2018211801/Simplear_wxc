@@ -5,7 +5,7 @@ from multiprocessing import Pool, cpu_count
 
 datasets = ["dataset_names"]
 resolution = 1024
-root = "/path_to_dir/cosmos_tokens"
+root = "/openseg_blob/wxc/SimpleAR/ckpt/cosmos"
 total = 120000
 
 def check_file(i, code_dir, label_dir):

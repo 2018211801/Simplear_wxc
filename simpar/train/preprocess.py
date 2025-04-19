@@ -107,7 +107,21 @@ def preprocess_t2i(
         if random.random() < p_drop_cond:
             conversation = "<|t2i|>" + "<|soi|>" + "<|vtokens|>" * vtokens_shape
         else:
-            conversation = "<|t2i|>" + random.choice(PROMPTS_GEN) + source[1]["value"] + "<|soi|>" + "<|vtokens|>" * vtokens_shape
+            prompt = random.choice(PROMPTS_GEN)
+            print("%**********%prompt")
+            print(prompt)
+            print("++++++***********prompt")
+            try:
+                prompt=prompt[0]
+            except:
+                pass
+            if isinstance(prompt, list):
+                prompt = " ".join(prompt)  # 或者 "".join(prompt) 视你的应用场景决定
+            print("+++++++++value++++++++++++++")
+            print(source[1]["value"])
+            print("+++++++++++value++++++++++++")
+
+            conversation = "<|t2i|>" + prompt + source[1]["value"] + "<|soi|>" + "<|vtokens|>" * vtokens_shape
         # print(conversation, vtokens_shape)
         conversations.append(conversation)
     # tokenize conversations

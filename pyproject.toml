@@ -27,7 +27,7 @@ standalone = [
 
 train = [
     "simpar[standalone]",
-    "numpy==1.26.1",
+    "numpy==1.26.4",
     "open_clip_torch",
     "fastapi",
     "markdown2[all]",
@@ -41,14 +41,14 @@ train = [
     "deepspeed==0.14.4",
     "peft==0.4.0",
     "accelerate>=0.29.1",
-    "transformers==4.41.2",
+    "transformers==4.46.0",
     "bitsandbytes==0.41.0",
     "sentencepiece~=0.1.99",
     "einops==0.6.1",
     "einops-exts==0.0.4",
     "gradio_client==0.2.9",
     "urllib3<=2.0.0",
-    "datasets==2.16.1",
+    "datasets==2.21.0",
     "pydantic==1.10.8",
     "timm",
     "hf_transfer",
@@ -64,6 +64,10 @@ train = [
     "imageio",
     "ijson",
     "trl==0.15.2",
+    "latex2sympy2_extended",
+    "clint",
+    "math_verify",
+   
 ]
 
 [tool.setuptools.packages.find]

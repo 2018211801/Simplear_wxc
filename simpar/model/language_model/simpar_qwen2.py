@@ -58,7 +58,8 @@ class SimpARForCausalLM(Qwen2ForCausalLM):
         tokenizer,
         **kwargs,
     ) -> Union[GenerateOutput, torch.LongTensor]:
-        
+        print("debug:::tokenizer")
+        print(tokenizer)
         max_steps = kwargs["max_new_tokens"]
         height, width = int(math.sqrt(max_steps)), int(math.sqrt(max_steps))
         negative_prompt_ids = kwargs.pop("negative_prompt_ids", None)
