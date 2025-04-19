@@ -24,22 +24,27 @@
 ## ##xiaochen
 
 rl部分主要是在trl上改的，所以最主要的是装好trl的环境依赖
+
 docker本地位置
 /openseg_blob/wxc/docker/simplear.tar
-
+```
 docker load -i /openseg_blob/wxc/docker/simplear.tar
+```
 
 网络位置： [Package simplear_wxc](https://github.com/users/2018211801/packages/container/package/simplear_wxc)
 
+
 进入docker后激活虚拟环境
-
+```
 conda activate simpar
-
+```
 
 
 /openseg_blob/wxc/SimpleAR/ckpt 路径下是下载好的一些模型，有reward,有visual tokenizer, 有base model checkpoint（目前还有问题，作者传错了）
-/openseg_blob/wxc/SimpleAR/datasets 是论文中用到的数据，
-因为论文中有私有数据，所以rl的数据是不明确的。先使用yaqi的couting tool data进行测试  /openseg_blob/wxc/SimpleAR/datasets/one_animal_grid_layout_5000_refine_v03_metadata_nolist2.json 已经进行过第一步预处理把visual token存下来了
+
+/openseg_blob/wxc/SimpleAR/datasets 是论文中用到的数据，目前的rl数据还不公开。
+
+先使用yaqi的couting tool data进行测试  /openseg_blob/wxc/SimpleAR/datasets/one_animal_grid_layout_5000_refine_v03_metadata_nolist2.json 已经进行过第一步预处理把visual token存下来了
 
 > 原文
 >
@@ -57,8 +62,9 @@ conda activate simpar
 
 
 训练
+```
 bash scripts/train/train_grpo.sh
-
+```
 参数修改在
 cd simpar/configs
 尤其注意训练使用的节点，如果用num台机器，在 zero3.yaml 里修改 num_processes: {num-1}
@@ -88,7 +94,6 @@ debug的配置
       "CUDA_LAUNCH_BLOCKING": "0"
     }
   }
-]
 ```
 
 
