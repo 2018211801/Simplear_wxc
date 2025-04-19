@@ -26,6 +26,8 @@ import torch
 import torch.nn as nn
 import transformers
 import datasets
+import transformers
+print(transformers.__file__)
 from transformers import set_seed
 from transformers import AutoTokenizer
 from transformers.trainer_utils import get_last_checkpoint

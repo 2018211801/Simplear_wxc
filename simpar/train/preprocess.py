@@ -108,9 +108,9 @@ def preprocess_t2i(
             conversation = "<|t2i|>" + "<|soi|>" + "<|vtokens|>" * vtokens_shape
         else:
             prompt = random.choice(PROMPTS_GEN)
-            print("%**********%prompt")
+            print("+++++++prompt++++++")
             print(prompt)
-            print("++++++***********prompt")
+            print("+++++++prompt+++++++")
             try:
                 prompt=prompt[0]
             except:
@@ -119,7 +119,7 @@ def preprocess_t2i(
                 prompt = " ".join(prompt)  # 或者 "".join(prompt) 视你的应用场景决定
             print("+++++++++value++++++++++++++")
             print(source[1]["value"])
-            print("+++++++++++value++++++++++++")
+            print("+++++++++value++++++++++++")
 
             conversation = "<|t2i|>" + prompt + source[1]["value"] + "<|soi|>" + "<|vtokens|>" * vtokens_shape
         # print(conversation, vtokens_shape)
