@@ -45,7 +45,7 @@ def clip_reward(completions, **kwargs):
     
     return rewards
 
-
+#一个返回的是标量直接用，一个返回的是向量需要取对角线的第一个值。
 def hps_reward(completions, **kwargs):
     image_features = [completion[0]["image_feature"] for completion in completions]
     text_features = [completion[0]["text_feature"] for completion in completions]

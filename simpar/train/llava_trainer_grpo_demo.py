@@ -113,7 +113,7 @@ class LLaVAGRPOTrainer(GRPOTrainer):
         
         codebook_size = 64000
         latent_size = 1024 // 16
-        index_samples = completion_ids - len(self.processing_class)  #为什么减掉151672
+        index_samples = completion_ids - len(self.processing_class)  #掉151672
         
         index_samples = torch.clamp(index_samples, min=0, max=codebook_size-1)
         index_samples = index_samples.reshape(-1, latent_size, latent_size).unsqueeze(1)
@@ -145,48 +145,39 @@ class LLaVAGRPOTrainer(GRPOTrainer):
     def _generate_and_score_completions(
         self, inputs: dict[str, Union[torch.Tensor, Any]]
     ) -> dict[str, Union[torch.Tensor, Any]]:
-        device = self.accelerator.device
+        
         prompts = [x["prompt"] for x in inputs]
-        prompts_text = [p for p in prompts]
+        
         prompt_inputs = self.processing_class(
             prompts_text, return_tensors="pt", padding=True, padding_side="left", add_special_tokens=False
         )
 
         prompt_ids, prompt_mask = prompt_inputs["input_ids"], prompt_inputs["attention_mask"]
-        prompt_ids = prompt_ids.to(device)
-        prompt_mask = prompt_mask.to(device)
         
-        if self.max_prompt_length is not None:
-            prompt_ids = prompt_ids[:, -self.max_prompt_length :]
-            prompt_mask = prompt_mask[:, -self.max_prompt_length :]
 
         # Generate completions 使用 vLLM 或常规生成
         if self.args.use_vllm:
-            # 如果需要，加载主进程的模型权重
-            if self.state.global_step != self._last_loaded_step:
-                self._move_model_to_vllm()
-                self._last_loaded_step = self.state.global_step
+            # 如果需要，加载主进程的模型权重            
 
             # 通过 gather_object 得到所有进程的 prompts
-            all_prompts_text = gather_object(prompts_text)
+            ordered_set_of_prompts = gather_object(prompts_text)
 
             if self.accelerator.is_main_process:
-                # 去重缓解重复计算，并保证至少有7个 prompt
-                ordered_set_of_prompts = list(dict.fromkeys(all_prompts_text))
-                if len(ordered_set_of_prompts) < 7:
-                    ordered_set_of_prompts += ordered_set_of_prompts[:7 - len(ordered_set_of_prompts)]
+                
 
                 # 调用 vLLM 生成结果
                 all_outputs = self.llm.generate(
                     ordered_set_of_prompts, sampling_params=self.sampling_params, use_tqdm=False
                 )
                 completion_ids = []
+
+                #取出视觉部分的token
                 for outputs in all_outputs:
                     for output in outputs.outputs:
                         completion_ids.append(output.token_ids)
                 
                 decoded_images, decoded_image_embeds = self._decode_images(completion_ids)
-            else:
+            else: #还有点没理解过来
                 # 非主进程暂时传递占位数据，等待主进程广播数据
                 completion_ids = [None] * len(all_prompts_text)
                 decoded_images = [None] * len(all_prompts_text)
@@ -221,49 +212,7 @@ class LLaVAGRPOTrainer(GRPOTrainer):
                 print(f"[DEBUG] Rank {torch.distributed.get_rank()} - Broadcasting completion_ids failed: {err}")
                 raise
 
-            # 对 decoded_images 进行同样的调试与广播
-            try:
-                serialized_decoded_images = pickle.dumps(decoded_images)
-                print(
-                    f"[DEBUG] Rank {torch.distributed.get_rank()} - Before broadcast - "
-                    f"decoded_images serialized length: {len(serialized_decoded_images)}"
-                )
-            except Exception as err:
-                print(f"[DEBUG] Rank {torch.distributed.get_rank()} - Error while serializing decoded_images: {err}")
-
-            torch.distributed.barrier()
-
-            try:
-                decoded_images =  broadcast_pickle_object(decoded_images, src=0, device=device)
-                print(
-                    f"[DEBUG] Rank {torch.distributed.get_rank()} - After broadcast - "
-                    f"decoded_images list length: {len(decoded_images)}"
-                )
-            except Exception as err:
-                print(f"[DEBUG] Rank {torch.distributed.get_rank()} - Broadcasting decoded_images failed: {err}")
-                raise
-
-            # 对 decoded_image_embeds 进行同样的调试与广播
-            try:
-                serialized_decoded_image_embeds = pickle.dumps(decoded_image_embeds)
-                print(
-                    f"[DEBUG] Rank {torch.distributed.get_rank()} - Before broadcast - "
-                    f"decoded_image_embeds serialized length: {len(serialized_decoded_image_embeds)}"
-                )
-            except Exception as err:
-                print(f"[DEBUG] Rank {torch.distributed.get_rank()} - Error while serializing decoded_image_embeds: {err}")
-
-            torch.distributed.barrier()
-
-            try:
-                decoded_image_embeds =  broadcast_pickle_object(decoded_image_embeds, src=0, device=device)
-                print(
-                    f"[DEBUG] Rank {torch.distributed.get_rank()} - After broadcast - "
-                    f"decoded_image_embeds list length: {len(decoded_image_embeds)}"
-                )
-            except Exception as err:
-                print(f"[DEBUG] Rank {torch.distributed.get_rank()} - Broadcasting decoded_image_embeds failed: {err}")
-                raise
+           
             ############################################################################
 
             # 每个进程只取对应的 slice
@@ -290,14 +239,14 @@ class LLaVAGRPOTrainer(GRPOTrainer):
             prompt_ids = prompt_completion_ids[:, :prompt_length]
             completion_ids = prompt_completion_ids[:, prompt_length:]
 
-        # 以下是对生成内容的后处理、计算 mask、logits 以及评分，简略说明：
+        # 以下是对生成内容的后处理、计算 mask、logits 以及评分
         is_eos = completion_ids == self.processing_class.eos_token_id
         eos_idx = torch.full((is_eos.size(0),), is_eos.size(1), dtype=torch.long, device=device)
         eos_idx[is_eos.any(dim=1)] = is_eos.int().argmax(dim=1)[is_eos.any(dim=1)]
         sequence_indices = torch.arange(is_eos.size(1), device=device).expand(is_eos.size(0), -1)
         completion_mask = (sequence_indices <= eos_idx.unsqueeze(1)).int()
 
-        # 拼接 prompt_mask 与 completion_mask 供后续计算使用
+        # 拼接 prompt_mask 与 completion_mask 供后续计算使用，拿到有价值的mask
         attention_mask = torch.cat([prompt_mask, completion_mask], dim=1)
 
         logits_to_keep = completion_ids.size(1)  # 只计算 completion 部分的 logits
@@ -615,29 +564,14 @@ def main(script_args, training_args, model_args):
     
     # trainer.aesthetic_model = aest_model
 
-    ###############
-    # Training loop
-    ###############
-    logger.info("*** Train ***")
-    checkpoint = None
-    if training_args.resume_from_checkpoint is not None:
-        checkpoint = training_args.resume_from_checkpoint
-    elif last_checkpoint is not None:
-        checkpoint = last_checkpoint
+   
     train_result = trainer.train(resume_from_checkpoint=checkpoint)
+                                 
     metrics = train_result.metrics
     metrics["train_samples"] = len(dataset[script_args.dataset_train_split])
     trainer.log_metrics("train", metrics)
     trainer.save_metrics("train", metrics)
     trainer.save_state()
-
-    ##################################
-    # Save model and create model card
-    ##################################
-    logger.info("*** Save model ***")
-    trainer.save_model(training_args.output_dir)
-    logger.info(f"Model saved to {training_args.output_dir}")
-
     # Save everything else on main process
     kwargs = {
         "dataset_name": script_args.dataset_name,

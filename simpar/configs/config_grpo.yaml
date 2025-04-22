@@ -1,5 +1,5 @@
 # Model arguments
-model_name_or_path: /openseg_blob/wxc/SimpleAR/ckpt/simplear-1.5b/simplear_1.5B_sft
+model_name_or_path: /openseg_blob/wxc/SimpleAR/ckpt/SimpleAR-1.5B-SFT
 torch_dtype: bfloat16
 attn_implementation: sdpa
 
@@ -11,7 +11,7 @@ system_prompt: "You are a helpful AI Assistant that provides well-reasoned and d
 # GRPO trainer config
 bf16: true
 use_vllm: true
-vllm_device: "cuda:3"
+vllm_device: auto
 vllm_server_timeout: 300.0
 vllm_server_port: 8006
 vllm_gpu_memory_utilization: 0.7
@@ -24,7 +24,7 @@ gradient_accumulation_steps: 1
 gradient_checkpointing: false
 gradient_checkpointing_kwargs:
   use_reentrant: false
-learning_rate: 1.0e-06
+learning_rate: 1.0e-05
 log_completions: false
 log_level: info
 logging_first_step: false
@@ -36,7 +36,7 @@ lr_scheduler_kwargs:
 max_prompt_length: 512
 max_completion_length: 4096
 max_steps: -1
-num_generations: 4
+num_generations: 2
 num_train_epochs: 1
 output_dir: ./output
 overwrite_output_dir: true
@@ -51,4 +51,4 @@ reward_weights:
 save_strategy: "steps"
 save_steps: 100
 seed: 0
-warmup_ratio: 0.1
+# warmup_ratio: 0.1

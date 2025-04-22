@@ -112,11 +112,12 @@ class CausalVideoTokenizer(torch.nn.Module):
         Returns:
             The reconstructed tensor, layout [B,3,1+(T-1)*8,H*16,W*16] in range [-1..1].
         """
+        
         assert (
             input_latent.ndim >= 4
         ), "input latent should be of 5D for continuous and 4D for discrete."
         return self._dec_model(input_latent)
-
+      
     def forward(
         self,
         video: np.ndarray,

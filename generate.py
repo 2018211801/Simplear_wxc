@@ -73,6 +73,7 @@ def generate(model, vq_model, tokenizer, prompts, save_dir, args):
                     sampling_params,
                     use_tqdm=False
                 )
+            print(outs)
             sampling_time = time.time() - t1
             llm_time += sampling_time
 
@@ -129,10 +130,10 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-path", type=str, default="./checkpoints/simpar_1.5B_rl")
-    parser.add_argument("--vq-model-ckpt", type=str, default="./checkpoints/Cosmos-1.0-Tokenizer-DV8x16x16")
-    parser.add_argument("--prompts", nargs="+", default=["Inside a warm room with a large window showcasing a picturesque winter landscape, three gleaming ruby red necklaces are elegantly laid out on the plush surface of a deep purple velvet jewelry box. The gentle glow from the overhead light accentuates the rich color and intricate design of the necklaces. Just beyond the glass pane, snowflakes can be seen gently falling to coat the ground outside in a blanket of white."])
-    parser.add_argument("--save_dir", type=str, default="./visualize")
+    parser.add_argument("--model-path", type=str, default="/openseg_blob/wxc/SimpleAR/ckpt/SimpleAR-1.5B-SFT")
+    parser.add_argument("--vq-model-ckpt", type=str, default="/openseg_blob/wxc/SimpleAR/ckpt/cosmos")
+    parser.add_argument("--prompts", nargs="+", default=["ten dogs"])
+    parser.add_argument("--save_dir", type=str, default="/openseg_blob/wxc/SimpleAR/visualize")
     parser.add_argument("--vllm_serving", action="store_true")
     parser.add_argument("--image-size", type=int, choices=[256, 512, 768, 1024], default=1024)
     parser.add_argument("--top_p", type=float, default=1.0)

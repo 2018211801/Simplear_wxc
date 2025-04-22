@@ -1,5 +1,5 @@
 PROMPT_VERSION="qwen_1_5"
-LLM_VERSION="/path_to_your_dir/Qwen2.5-0.5B-Instruct" 
+LLM_VERSION="/openseg_blob/wxc/models/Qwen2.5-0.5B-Instruct" 
 
 IFS=',' read -ra ALL_PORTS <<< $METIS_WORKER_0_PORT
 export NCCL_SOCKET_IFNAME=eth0
@@ -7,13 +7,13 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 ACCELERATE_CPU_AFFINITY=1 \
  torchrun \
-    --nnodes=4 \
-    --nproc_per_node=8 \
-    llava/train/train_mem.py \
+    --nnodes=1 \
+    --nproc_per_node=4 \
+    simpar/train/train_mem.py \
     --deepspeed scripts/zero3.json \
     --model_name_or_path ${LLM_VERSION} \
     --version ${PROMPT_VERSION} \
-    --gen_data_path /path_to_annotation_file \
+    --gen_data_path /openseg_blob/wxc/SimpleAR/datasets/one_animal_grid_layout_500_refine_v03_metadata_nolist2.json \
     --gen_image_folder "" \
     --token_dataset True \
     --sample_short True \
@@ -24,14 +24,14 @@ ACCELERATE_CPU_AFFINITY=1 \
     --mm_patch_merge_type spatial_unpad \
     --bf16 True \
     --run_name test \
-    --output_dir /path_to_output_dir \
-    --num_train_epochs 10 \
+    --output_dir /openseg_blob/wxc/ckpt/simpar \
+    --num_train_epochs 3 \
     --per_device_train_batch_size 8 \
     --per_device_eval_batch_size 1 \
     --gradient_accumulation_steps 2 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
-    --save_steps 5000 \
+    --save_steps 500 \
     --learning_rate 1e-4 \
     --weight_decay 0.01 \
     --warmup_ratio 0.0 \

@@ -67,8 +67,6 @@ def _add_speaker_and_signal(header, source, get_conversation=True):
 
 
 PROMPTS_GEN = [
-    "",
-    "a photo of",
     "A detailed digital painting of ",
     "A highly realistic image of ",
     "An abstract representation of ",
@@ -103,28 +101,13 @@ def preprocess_t2i(
     conversations = []
     for source in sources:
         assert len(source) == 2
-        # put <|vtokens|> as placeholder for vq tokens
         if random.random() < p_drop_cond:
             conversation = "<|t2i|>" + "<|soi|>" + "<|vtokens|>" * vtokens_shape
         else:
-            prompt = random.choice(PROMPTS_GEN)
-            print("+++++++prompt++++++")
-            print(prompt)
-            print("+++++++prompt+++++++")
-            try:
-                prompt=prompt[0]
-            except:
-                pass
-            if isinstance(prompt, list):
-                prompt = " ".join(prompt)  # 或者 "".join(prompt) 视你的应用场景决定
-            print("+++++++++value++++++++++++++")
-            print(source[1]["value"])
-            print("+++++++++value++++++++++++")
-
-            conversation = "<|t2i|>" + prompt + source[1]["value"] + "<|soi|>" + "<|vtokens|>" * vtokens_shape
-        # print(conversation, vtokens_shape)
+            conversation = "<|t2i|>" + random.choice(PROMPTS_GEN) + source[1]["value"] + "<|soi|>" + "<|vtokens|>" * vtokens_shape
+        
         conversations.append(conversation)
-    # tokenize conversations
+    
     input_ids = [tokenizer(prompt, return_tensors="pt").input_ids for prompt in conversations]
     targets = copy.deepcopy(input_ids)
 
@@ -807,4 +790,4 @@ def preprocess(sources: Sequence[str], tokenizer: transformers.PreTrainedTokeniz
         speakers = [sentence["from"] for sentence in source]
         _mask_targets(target, tokenized_lens, speakers)
 
-    return dict(input_ids=input_ids, labels=targets)
+    return dict(input_ids=input_ids, labels=targets)                                                                                                                                                                                                                                                                                                                                                                                                                                      
